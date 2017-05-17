@@ -58,6 +58,7 @@ public class ZhiHuUserPageProcessor implements PageProcessor{
         //2. 如果是用户详细页面
         else{
             num++;//用户数++
+
             /*实例化ZhihuUser，方便持久化存储。*/
             ZhihuUser user = new ZhihuUser();
             /*从下载到的用户详细页面中抽取想要的信息，这里使用xpath居多*/
@@ -72,6 +73,7 @@ public class ZhiHuUserPageProcessor implements PageProcessor{
 
             int sex = -1;
 
+            //sex取值
             if(gender=="Icon Icon--male"){
                 sex=1;
             }else if(gender=="Icon Icon--company"){
