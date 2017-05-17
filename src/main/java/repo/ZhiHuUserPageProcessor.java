@@ -18,10 +18,9 @@ import java.util.List;
  * 知乎用户小爬虫<br>
  * 输入搜索用户关键词(keyword)，并把搜出来的用户信息爬出来<br>
 
- * @date 2016-5-3
- * @website ghb.soecode.com
- * @csdn blog.csdn.net/antgan
- * @author antgan
+ * @date 2017-5-17
+ * @website wustzoujing.cn
+ * @author zoujing
  *
  */
 public class ZhiHuUserPageProcessor implements PageProcessor{
