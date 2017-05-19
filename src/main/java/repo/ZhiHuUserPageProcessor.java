@@ -6,7 +6,8 @@ package repo;
 import dao.ZhihuDao;
 import dao.impl.ZhihuDaoImpl;
 import entity.ZhihuUser;
-import org.apache.http.HttpHost;
+
+import proxy.HttpUtils;
 import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.Site;
 import us.codecraft.webmagic.Spider;
@@ -14,7 +15,12 @@ import us.codecraft.webmagic.processor.PageProcessor;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import us.codecraft.webmagic.proxy.SimpleProxyPool;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -31,12 +37,20 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ZhiHuUserPageProcessor implements PageProcessor{
     //抓取网站的相关配置，包括：编码、抓取间隔、重试次数等
     private Site site = Site.me().setRetryTimes(10).setSleepTime(1000)
-            .setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36");
+            .setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36")
+            .setDomain("www.zhihu.com");
+
+
+//
+    public List<String[]> ipList = new ArrayList();
+    public BufferedReader proxyIpReader = new BufferedReader(new InputStreamReader(HttpUtils.class.getResourceAsStream("/proxyip.txt")));
+
+
 
     //用户数量
     private static AtomicInteger num = new AtomicInteger(0);
     //搜索关键词，这里用我的id
-    private static String keyword = "艺术";
+    private static String keyword = "陈萌萌";
     //数据库持久化对象，用于将用户信息存入数据库
     private ZhihuDao zhihuDao = new ZhihuDaoImpl();
 
@@ -69,7 +83,7 @@ public class ZhiHuUserPageProcessor implements PageProcessor{
 
             String html=page.getHtml().get();
 
-            System.out.println(html);
+//            System.out.println(html);
 
             Element userUrlContent = null;
 
@@ -182,7 +196,7 @@ public class ZhiHuUserPageProcessor implements PageProcessor{
 
             System.out.println(user.toString()+"\n");//输出对象
 
-            zhihuDao.saveUser(user);//保存用户信息到数据库
+//            zhihuDao.saveUser(user);//保存用户信息到数据库
 
 
             //爬去用户关注人界面第一页的链接。
@@ -203,33 +217,33 @@ public class ZhiHuUserPageProcessor implements PageProcessor{
         }
 
 
-        //传入用户关注列表，获取他所关注人的url
-        else if(page.getUrl().regex("https://www\\.zhihu\\.com/people/(.+)/following").match()){
-
-
-//            System.out.print("获取关注人url中。。。。。   ");
-
-
-            Element userFollowingContent = null;
-            userFollowingContent = Jsoup.parse(page.getHtml().get());
-            Elements followingElements = userFollowingContent.select(".List-item");
-            //判断当前页关注人数是否为0，是的话就跳出循环
-            if (followingElements.size() != 0) {
-                for (Element e : followingElements) {
-                    String newUserUrl = e.select("a[href]").get(0).attr("href");
-                    //把获取到的地址加入队列
-                    if (!newUserUrl.contains("org")) {
-
-                        num.getAndIncrement();//用户数++
-
-//                        String TargetRequest=newUserUrl+"/answers";
-                        page.addTargetRequest(newUserUrl+"/answers");
-
-//                        System.out.print("获得关注人url："+TargetRequest);
-                    }
-                }
-            }
-        }
+//        //传入用户关注列表，获取他所关注人的url
+//        else if(page.getUrl().regex("https://www\\.zhihu\\.com/people/(.+)/following").match()){
+//
+//
+////            System.out.print("获取关注人url中。。。。。   ");
+//
+//
+//            Element userFollowingContent = null;
+//            userFollowingContent = Jsoup.parse(page.getHtml().get());
+//            Elements followingElements = userFollowingContent.select(".List-item");
+//            //判断当前页关注人数是否为0，是的话就跳出循环
+//            if (followingElements.size() != 0) {
+//                for (Element e : followingElements) {
+//                    String newUserUrl = e.select("a[href]").get(0).attr("href");
+//                    //把获取到的地址加入队列
+//                    if (!newUserUrl.contains("org")) {
+//
+//                        num.getAndIncrement();//用户数++
+//
+////                        String TargetRequest=newUserUrl+"/answers";
+//                        page.addTargetRequest(newUserUrl+"/answers");
+//
+////                        System.out.print("获得关注人url："+TargetRequest);
+//                    }
+//                }
+//            }
+//        }
 
 
     }
@@ -244,6 +258,35 @@ public class ZhiHuUserPageProcessor implements PageProcessor{
 
 
     public Site getSite() {
+
+        String[] ip = new String[4];
+        try {
+            while(proxyIpReader.readLine() != null) {
+                String socket=proxyIpReader.readLine();
+                String[] ipandport=socket.split(":");
+
+                System.out.print(ipandport[0]+"  "+ipandport[1]);
+
+                if(ipandport.length==2){
+                    ip[0]="";
+                    ip[1]="";
+                    ip[2]=ipandport[0];
+                    ip[3]=ipandport[1];
+                    ipList.add(ip);
+                }
+
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+//        System.out.print(ipList);
+
+        SimpleProxyPool simpleProxyPool=new SimpleProxyPool(ipList);
+
+        this.site=this.site.setHttpProxyPool(ipList,false);
+
 
 
         return this.site;
