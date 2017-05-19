@@ -6,6 +6,7 @@ package repo;
 import dao.ZhihuDao;
 import dao.impl.ZhihuDaoImpl;
 import entity.ZhihuUser;
+import org.apache.http.HttpHost;
 import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.Site;
 import us.codecraft.webmagic.Spider;
@@ -29,11 +30,13 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class ZhiHuUserPageProcessor implements PageProcessor{
     //抓取网站的相关配置，包括：编码、抓取间隔、重试次数等
-    private Site site = Site.me().setRetryTimes(10).setSleepTime(1000);
+    private Site site = Site.me().setRetryTimes(10).setSleepTime(1000)
+            .setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36");
+
     //用户数量
-//    private static AtomicInteger num = new AtomicInteger(0);
+    private static AtomicInteger num = new AtomicInteger(0);
     //搜索关键词，这里用我的id
-    private static String keyword = "陈萌萌";
+    private static String keyword = "艺术";
     //数据库持久化对象，用于将用户信息存入数据库
     private ZhihuDao zhihuDao = new ZhihuDaoImpl();
 
@@ -60,11 +63,13 @@ public class ZhiHuUserPageProcessor implements PageProcessor{
         //2. 如果是用户详细页面
         else if(page.getUrl().regex("https://www\\.zhihu\\.com/people/(.+)/answers").match())
         {
-//            num.getAndIncrement();//用户数++
+            num.getAndIncrement();//用户数++
 
-//            System.out.println(num+": adr: "+page.getUrl().get());
+//            System.out.println(page.getUrl().get());
 
-            String html=page.toString();
+            String html=page.getHtml().get();
+
+            System.out.println(html);
 
             Element userUrlContent = null;
 
@@ -175,7 +180,7 @@ public class ZhiHuUserPageProcessor implements PageProcessor{
 
 //            System.out.println("执行saveuser");
 
-//            System.out.println("num:"+num +" " + user.toString()+"\n");//输出对象
+            System.out.println(user.toString()+"\n");//输出对象
 
             zhihuDao.saveUser(user);//保存用户信息到数据库
 
@@ -215,7 +220,7 @@ public class ZhiHuUserPageProcessor implements PageProcessor{
                     //把获取到的地址加入队列
                     if (!newUserUrl.contains("org")) {
 
-//                        num.getAndIncrement();//用户数++
+                        num.getAndIncrement();//用户数++
 
 //                        String TargetRequest=newUserUrl+"/answers";
                         page.addTargetRequest(newUserUrl+"/answers");
@@ -239,6 +244,8 @@ public class ZhiHuUserPageProcessor implements PageProcessor{
 
 
     public Site getSite() {
+
+
         return this.site;
     }
 
@@ -247,15 +254,15 @@ public class ZhiHuUserPageProcessor implements PageProcessor{
         System.out.println("========知乎用户信息爬虫-启动ing！=========");
         startTime = new Date().getTime();
         //入口为：【https://www.zhihu.com/search?type=people&q=xxx 】，其中xxx 是搜索关键词
-//        Spider spider= Spider.create(new ZhiHuUserPageProcessor()).addUrl("https://www.zhihu.com/search?type=people&q="+keyword);
+        Spider spider= Spider.create(new ZhiHuUserPageProcessor()).addUrl("https://www.zhihu.com/search?type=people&q="+keyword);
 //
-        Spider spider= Spider.create(new ZhiHuUserPageProcessor()).addUrl("https://www.zhihu.com/people/jjmoe/answers");
+//        Spider spider= Spider.create(new ZhiHuUserPageProcessor()).addUrl("https://www.zhihu.com/people/jjmoe/answers");
 
         spider.thread(5);
         spider.run();
         endTime = new Date().getTime();
         System.out.println("========知乎用户信息小爬虫结束！===========");
-        System.out.println("本次用时为："+(endTime-startTime)/1000+"s");
+        System.out.println("本次共得到"+num+"个用户数据----用时为："+(endTime-startTime)/1000+"s");
     }
 
 }
