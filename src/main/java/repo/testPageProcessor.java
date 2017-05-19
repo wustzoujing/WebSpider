@@ -1,9 +1,15 @@
 package repo;
 
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
 import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.Site;
 import us.codecraft.webmagic.Spider;
+import us.codecraft.webmagic.pipeline.ConsolePipeline;
 import us.codecraft.webmagic.processor.PageProcessor;
+
 
 
 /**
@@ -36,12 +42,16 @@ public class testPageProcessor implements PageProcessor{
 
     public static void main(String[] args) {
 
+//        System.getProperties().setProperty("webdriver.chrome.driver","/Users/zoujing/Downloads/chromedriver");
+//        WebDriver webDriver=new ChromeDriver();
+//        webDriver.get("http://music.163.com/#/discover/playlist");
+//        WebElement webElement=webDriver.findElement(By.xpath("/html"));
+//        System.out.println(webElement.getAttribute("innerHTML"));
+//        webDriver.close();
+
+
         Spider.create(new testPageProcessor())
-                //从"https://github.com/code4craft"开始抓
                 .addUrl("https://github.com/code4craft")
-                //开启5个线程抓取
-                .thread(5)
-                //启动爬虫
                 .run();
     }
 }
