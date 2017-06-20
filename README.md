@@ -1,2 +1,2 @@
-# WebSprider
-first sprider project,using webmagic
+# WebSpider
+first spider project,using webmagic
